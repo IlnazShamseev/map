@@ -1,0 +1,87 @@
+import sys
+
+import requests
+from PyQt6 import QtCore
+from PyQt6.QtGui import (
+    QFont, QPixmap
+)
+from PyQt6.QtWidgets import (
+    QApplication, QWidget,
+    QLabel
+)
+
+
+def font(f="Consolas", s=14):
+    # Это функция возвращает стиль текста
+    return QFont(f, s)
+
+
+alignmentCenter = QtCore.Qt.AlignmentFlag.AlignCenter
+alignmentLeft = QtCore.Qt.AlignmentFlag.AlignLeft
+
+
+class MainWindow(QWidget):
+    # Это основное окно
+    def __init__(self):
+        # Проводим инициализацию
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        # Этот метод для создания интерфейса
+
+        self.setWindowTitle("Maps")
+        self.setFixedSize(500, 500)
+
+        self.map = QLabel(self)
+        self.map.move(25, 25)
+        self.map.resize(450, 450)
+        self.map.setVisible(True)
+
+        self.give_map()
+
+    def give_map(self, x=52.318529, y=54.885912):
+        server_address = "https://static-maps.yandex.ru/v1"
+
+        params = {
+            "apikey": "f3a0fe3a-b07e-4840-a1da-06f18b2ddf13",
+            "ll": str(x) + "," + str(y),
+            "z": "9",
+            "size": "450,450",
+            "spn": "0.001,0.001",
+            "maptype": "map",
+        }
+
+        response = requests.get(
+            server_address,
+            params=params
+        )
+
+        # Проверка на соединения с сервером
+        if not response:
+            print("Ошибка выполнения запроса:")
+            print(server_address, params)
+            print(f"Http статус: {response.status_code} ( {response.reason} )")
+            sys.exit(1)
+
+        # Запишем полученное изображение в файл.
+        map_file = "map.png"
+        with open(map_file, "wb") as file:
+            file.write(response.content)
+
+        ## Изображение
+        pixmap = QPixmap('map.png')
+        self.map.setPixmap(pixmap)
+
+
+def except_hook(cls, exception, traceback):
+    sys.__excepthook__(cls, exception, traceback)
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    wnd = MainWindow()
+    wnd.setVisible(True)
+    sys.excepthook = except_hook
+    sys.exit(app.exec())
